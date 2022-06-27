@@ -14,12 +14,12 @@
 
     "servers": [
         {
-            "url": "http://localhost:3333",
-            "descripiton": "Servidor local"
+            "url": "https://app-projeto-final-backend.herokuapp.com",
+            "descripiton": "Deployed server"
         },
         {
-            "url": "",
-            "descripiton": "Deploy"
+            "url": "http://localhost:3333",
+            "descripiton": "Servidor local"
         }
     ],
 
@@ -27,32 +27,54 @@
         "/users": {
             "get": {
                 "summary": "Lista todos os usuários",
-                "description": "Retorna a lista de todos os usuários",
-                "tags": ["Users"],
+                "description": "Retorna a lista de todos os usuários em um array ou um unico se for fornecido email na query",
+                "tags": ["users"],
+
                 "parameters": [
                     {
-                        "description": " Nenhum parametro e exigido, retorna todos os usuarios "
-                    },
-                    {
+                        "name": "email",
                         "in": "query",
-                        "id": "uuid",
+                        "description": "email do usuario",
                         "required": false,
-                        "description": "Se passado um ID de um usuario ja existente, este sera retornado "
+                        "schema": {
+                            "type": "string"
+                        },
+                        "style": "simple"
                     }
                 ],
+
                 "responses": {
                     "200": {
                         "description": "OK",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/user"
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/userResponse"
+                                    }
                                 }
                             }
                         }
                     },
-                    "404": {
-                        "description": "User not foud"
+
+                    "405": {
+                        "description": "Usuario nao encontrado por email",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "error": {
+                                            "type": "string"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             },
@@ -60,32 +82,54 @@
             "post": {
                 "summary": "Cadastra um novo usuario",
                 "description": "Cadastra um novo usuario se ainda não existir, retorna um error se o ususario já existe",
-                "tags": ["Users"],
+                "tags": ["users"],
+
                 "parameters": [
                     {
+                        "name": "name",
                         "in": "body",
-                        "Nome": "string",
+                        "description": "Name do usuario",
                         "required": true,
-                        "description": "Nome para um novo usuario"
+                        "schema": {
+                            "type": "string"
+                        },
+
+                        "style": "simple"
                     },
                     {
+                        "name": "email",
                         "in": "body",
-                        "email": "string",
+                        "description": "Email do usuario",
                         "required": true,
-                        "description": "Email para um novo usuario"
+                        "schema": {
+                            "type": "string"
+                        },
+
+                        "style": "simple"
                     },
                     {
+                        "name": "password",
                         "in": "body",
-                        "senha": "string",
+                        "description": "Senha do usuario",
                         "required": true,
-                        "description": "Senha para um novo usuario "
+                        "schema": {
+                            "type": "string"
+                        },
+
+                        "style": "simple"
                     }
                 ],
+
                 "requestBody": {
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/users"
+                                "$ref": "#/components/schemas/newUser"
+                            },
+                            "example": {
+                                "name": "Matheus Examplo",
+                                "email": "usuario@existente.com",
+                                "senha": "senhaValida"
                             }
                         }
                     }
@@ -93,24 +137,36 @@
 
                 "responses": {
                     "200": {
-                        "description": "Usuário Criado com Sucesso",
+                        "description": "Usuario cadastrado com sucesso",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/userAuthenticatedSucessful"
+                                    "$ref": "#/components/schemas/userResponse"
                                 },
-                                "examples": {
+                                "example": {
                                     "id": "b36a11bc-4d32-43a4-9325-47b1b76ffb1d",
-                                    "name": "name",
-                                    "email": "email@email.com",
-                                    "toke": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2NTYwOTU0MzEsImV4cCI6MTY1NjE4MTgzMSwic3ViIjoiYjM2YTExYmMtNGQzMi00M2E0LTkzMjUtNDdiMWI3NmZmYjFkIn0.EUit_8DtcSUNXSHCDIrG_3XkxulTYjEi3nJZ8JJVldk"
+                                    "name": "Example User",
+                                    "email": "example@gmail.com",
+                                    "created_at": "2022-06-24T21:30:10.744Z",
+                                    "updated_at": "2022-06-24T21:30:10.744Z"
                                 }
                             }
                         }
                     },
 
                     "409": {
-                        "description": "User already exists"
+                        "description": "User already exists",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/mensage"
+                                },
+                                "example": {
+                                    "error": "409",
+                                    "message": "User already exists"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -120,22 +176,33 @@
             "post": {
                 "summary": "Autentição no app para alterar e deletar um usuario existente",
                 "description": "A atuenticação dura 1 dia, e feita araves de JWT dando permissão ao usuario logado a Deletar e atualizar usuarios ja existentes",
-                "tags": ["Autenticação"],
+                "tags": ["authentication"],
+
                 "parameters": [
                     {
+                        "email": "email",
                         "in": "body",
-                        "email": "string",
-                        "senha": "string",
-                        "description": "Email para o usuario ja cadastrado",
-                        "required": true
+                        "description": "Email do usuario ja cadastrado",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+
+                        "style": "simple"
                     },
                     {
+                        "password": "password",
                         "in": "body",
-                        "senha": "string",
-                        "description": "Senha para o usuario ja cadastrado",
-                        "required": true
+                        "description": "Senha do usuario ja cadastrado",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+
+                        "style": "simple"
                     }
                 ],
+
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -157,13 +224,46 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/userAuthenticatedSucessful"
+                                },
+                                "example": {
+                                    "user": {
+                                        "id": "b36a11bc-4d32-43a4-9325-47b1b76ffb1d",
+                                        "name": "exmaple User",
+                                        "email": "example@gmail.com",
+                                        "created_at": "2022-06-24T21:30:10.744Z",
+                                        "updated_at": "2022-06-24T21:30:10.744Z"
+                                    },
+                                    "token": "token.jwt.auth"
                                 }
                             }
                         }
                     },
 
                     "404": {
-                        "description": "Password does not match or User not found"
+                        "description": "Password does not match or User not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/mensage"
+                                },
+                                "examples": {
+                                    "userNotFound": {
+                                        "summary": "User not found",
+                                        "value": {
+                                            "mensage": "user not found",
+                                            "error": "404"
+                                        }
+                                    },
+                                    "passwordDosentMatch": {
+                                        "summary": "password does not match",
+                                        "value": {
+                                            "mensage": "password does not match",
+                                            "error": "404"
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -173,34 +273,91 @@
             "patch": {
                 "summary": "Atualiza um usuario",
                 "description": "Atualiza um usuario ja existente, para atualizar e preciso esta autenticado",
-                "tags": ["Rotas autenticadas"],
+                "tags": ["auth routes"],
                 "security": [{ "bearerAuth": [] }],
+
                 "parameters": [
                     {
+                        "id": "id",
                         "in": "query",
-                        "id": "uuid",
-                        "description": "ID do usuario ja cadastrado ",
-                        "required": true
+                        "description": "id do usuario ja cadastrado",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+
+                        "style": "simple"
                     },
                     {
+                        "email": "email",
                         "in": "body",
-                        "email": "string",
-                        "description": "Novo email a ser alterdo"
+                        "description": "email do usuario ja cadastrado",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+
+                        "style": "simple"
                     },
                     {
+                        "name": "name",
                         "in": "body",
-                        "senha": "string",
-                        "description": "Novo email a ser alterdo"
+                        "description": "Nome do usuario ja cadastrado",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+
+                        "style": "simple"
                     }
                 ],
 
                 "responses": {
                     "200": {
-                        "description": "OK"
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/updatedUser"
+                                },
+                                "example": {
+                                    "user": {
+                                        "id": "b36a11bc-4d32-43a4-9325-47b1b76ffb1d",
+                                        "name": "exmaple User atualizado",
+                                        "email": "exampleAtualizado@gmail.com",
+                                        "created_at": "2022-06-24T21:30:10.744Z",
+                                        "updated_at": "2022-06-24T21:30:10.744Z"
+                                    }
+                                }
+                            }
+                        }
                     },
 
-                    "404": {
-                        "description": "User not found"
+                    "400": {
+                        "description": "Invalid Id or User not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/mensage"
+                                },
+                                "examples": {
+                                    "userNotFound": {
+                                        "summary": "User not found",
+                                        "value": {
+                                            "mensage": "User not found",
+                                            "error": "400"
+                                        }
+                                    },
+                                    "invalidID": {
+                                        "summary": "Invalid ID",
+                                        "value": {
+                                            "mensage": "Invalid ID",
+                                            "error": "400"
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             },
@@ -208,20 +365,77 @@
             "delete": {
                 "summary": "Delete um usuario",
                 "description": "Delete um usuario ja existente, para deletar e preciso esta autenticado",
-                "tags": ["Rotas autenticadas"],
+                "tags": ["auth routes"],
                 "security": [{ "bearerAuth": [] }],
                 "parameters": [
                     {
-                        "id": "uuid",
+                        "id": "id",
                         "in": "query",
-                        "description": "ID do usuario ja cadastrado ",
-                        "required": true
+                        "description": "ID do usuario ja cadastrado",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+
+                        "style": "simple"
                     }
                 ],
 
                 "responses": {
-                    "200": {
-                        "description": "OK"
+                    "204": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/mensage"
+                                },
+                                "example": {
+                                    "mensage": "204"
+                                }
+                            }
+                        }
+                    },
+
+                    "400": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/mensage"
+                                },
+                                "examples": {
+                                    "userNotFound": {
+                                        "summary": "User not found",
+                                        "value": {
+                                            "mensage": "User not found",
+                                            "error": "400"
+                                        }
+                                    },
+                                    "invalidID": {
+                                        "summary": "Invalid ID",
+                                        "value": {
+                                            "mensage": "Invalid ID",
+                                            "error": "400"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+
+                    "404": {
+                        "description": "You can't delete your own account",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/mensage"
+                                },
+                                "example": {
+                                    "mensage": "You can't delete your own account",
+                                    "error": "404"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -230,13 +444,47 @@
 
     "components": {
         "schemas": {
-            "users": {
-                "type": "Array",
+            "userResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string"
+                    },
+                    "updated_at": {
+                        "type": "string"
+                    },
+                    "token": {
+                        "type": "string"
+                    }
+                }
+            },
+            "newUser": {
+                "type": "object",
                 "properties": {
                     "name": {
                         "type": "string"
                     },
                     "email": {
+                        "type": "string"
+                    },
+                    "password": {
+                        "type": "string"
+                    }
+                }
+            },
+            "mensage": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    },
+                    "error": {
                         "type": "string"
                     }
                 }
@@ -258,26 +506,42 @@
                     "email": {
                         "type": "string"
                     },
-                    "password": {
+                    "id": {
                         "type": "string"
                     },
-                    "id": {
-                        "type": "uuid"
+                    "name": {
+                        "type": "string"
                     },
+                    "created_at": {
+                        "type": "string"
+                    },
+                    "updated_at": {
+                        "type": "string"
+                    },
+
                     "token": {
                         "type": "string"
                     }
                 }
             },
-            "user": {
+
+            "updatedUser": {
                 "type": "object",
                 "properties": {
                     "email": {
                         "type": "string"
                     },
-
                     "id": {
-                        "type": "uuid"
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "created_at": {
+                        "type": "string"
+                    },
+                    "updated_at": {
+                        "type": "string"
                     }
                 }
             }
