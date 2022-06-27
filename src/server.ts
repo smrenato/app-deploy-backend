@@ -12,6 +12,9 @@ import "./database";
 import swaggerUI from "swagger-ui-express";
 import swaggerDocs from "./swagger.json";
 
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const app = express();
 
@@ -38,6 +41,6 @@ app.use((err: Error, request: Request, response: Response, _: NextFunction) => {
     });
 });
 
-app.listen(3333, () => {
+app.listen(process.env.PORT, () => {
     console.log("APP started on port 3333");
 });
